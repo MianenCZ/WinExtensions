@@ -1,10 +1,11 @@
-﻿using FS_Game.Common.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WinExtension.Common.Helpers;
+
 namespace FS_Game.Common.Extensions
 {
     public static class StringExtension
@@ -180,7 +181,8 @@ namespace FS_Game.Common.Extensions
         //TODO: Add documentation
         public static string Align(this string source, int charactersPerLine)
         {
-            Guard.IsNotNull(source, nameof(source));
+            if (source is null)
+                return "";
             StringBuilder bld = new StringBuilder();
             bool firstParagraph = true;
             foreach (var paragraph in source.Split(Environment.NewLine))
@@ -210,6 +212,12 @@ namespace FS_Game.Common.Extensions
         {
             string prefix = (includeFirstLine) ? indentation : "";
             return prefix + source.Replace(Environment.NewLine, Environment.NewLine + indentation);
+        }
+
+        //TODO: Add documentation
+        public static string GetLine(this string source, int line)
+        {
+            return source.Split(Environment.NewLine)[line];
         }
     }
 }
