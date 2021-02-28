@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,11 +10,13 @@ namespace WinExtension.GetOpt.Dtos
 {
     public class ArgDefinition<T> where T: new()
     {
-        internal Expression<Func<T, string>> Selector;
+        internal PropertyInfo storageInfo;
+        internal MethodInfo formaterInfo;
+        internal object formaterTarget;
 
-        internal ArgDefinition(Expression<Func<T, string>> selector)
+        internal ArgDefinition(PropertyInfo storageInfo)
         {
-            this.Selector = selector;
+            this.storageInfo = storageInfo;
         }
 
         public string ArgName { get; set; }

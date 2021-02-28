@@ -26,6 +26,13 @@ namespace WinExtensions.GetOpt.Tests
         public string c_file { get; set; }
     }
 
+    public class Args
+    {
+        public string fileName { get; set; }
+        public int lineCount { get; set; }
+
+    }
+
 
     public class PrintTests
     {
@@ -161,8 +168,8 @@ namespace WinExtensions.GetOpt.Tests
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eget sodales nibh. Sed a justo id velit tristique iaculis. Aenean mauris ante, luctus eget elit eget, accumsan aliquet erat.";
             getOpt.BootomDescription =
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eget sodales nibh. Sed a justo id velit tristique iaculis. Aenean mauris ante, luctus eget elit eget, accumsan aliquet erat. Quisque posuere sagittis ex, sed porttitor ex elementum vitae. Nulla viverra velit vel sapien dictum ultrices. Sed neque nibh, gravida nec mattis ut, bibendum quis lectus. Ut euismod tempor turpis. Nullam ac luctus libero, in vestibulum enim. Nullam maximus posuere metus sed tincidunt. Curabitur eget est quam. Aliquam ac ligula consectetur, pharetra elit at, viverra lectus. Nunc venenatis iaculis risus, id molestie mi malesuada id. Maecenas placerat blandit lacus, ut fermentum mi maximus nec. Nulla vehicula dapibus quam.";
-            
-            
+
+
             getOpt.AddOpt(o => o.isA)
                   .HasShortName("a")
                   .HasLongName("long")
@@ -188,7 +195,7 @@ namespace WinExtensions.GetOpt.Tests
                   .HasDescription(
                       "I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. ")
                   .IsIncompatibleWith("-a", "-b");
-            getOpt.AddArg(o => o.arg)
+            getOpt.AddArg(o => o.arg, s => s)
                   .IsRequired()
                   .HasDescription("prcat")
                   .HasHelpText("prcat help")
@@ -208,7 +215,7 @@ namespace WinExtensions.GetOpt.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        
+
 
         [Fact]
         public void OptionalArg()
@@ -251,7 +258,29 @@ namespace WinExtensions.GetOpt.Tests
         }
     }
 
-    public class ParseTests
+    public class ArgTests
+    {
+        #region [Theory]
+        [Theory]
+        [InlineData("IamFile", "150")]
+        [InlineData("null", "0")]
+        [InlineData("", "0")]
+        [InlineData("aoscnoasnvoianva", "-42")]
+        #endregion
+        public void BasicOptTests(params string[] args)
+        {
+            GetOptBase<Args> getOpt = new();
+            getOpt.AddArg(x => x.fileName, s => s);
+            getOpt.AddArg(x => x.lineCount, s => int.Parse(s));
+
+
+            Args res = getOpt.GetOpts(args);
+            res.fileName.Should().Be(args[0]);
+            res.lineCount.Should().Be(int.Parse(args[1]));
+        }
+    }
+
+    public class OptTests
     {
         #region [Theory]
         [Theory]
@@ -339,7 +368,7 @@ namespace WinExtensions.GetOpt.Tests
                   .HasLongName("B");
             getOpt.AddOpt(o => o.c)
                   .HasShortName("c")
-                  .HasLongName("C"); 
+                  .HasLongName("C");
 
 
             Opt2 opts = getOpt.GetOpts(args);

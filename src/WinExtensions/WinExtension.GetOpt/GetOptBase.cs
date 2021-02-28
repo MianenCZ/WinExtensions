@@ -13,10 +13,10 @@ using WinExtension.GetOpt.Helpers;
 
 namespace WinExtension.GetOpt
 {
-    public class GetOptBase<T> where T : new()
+    public class GetOptBase<TTarget> where TTarget : new()
     {
-        private readonly List<OptDefinition<T>> _opts;
-        private readonly List<ArgDefinition<T>> _args;
+        private readonly List<OptDefinition<TTarget>> _opts;
+        private readonly List<ArgDefinition<TTarget>> _args;
 
         public bool AllowMixedArgsOpts { get; set; } = true;
         public string ApplicationName { get; set; } = "Application";
@@ -29,20 +29,26 @@ namespace WinExtension.GetOpt
             _args = new();
         }
 
-        public IOptDefinitionFluentBuilder<T> AddOpt(Expression<Func<T, bool>> selector)
+        public IOptDefinitionFluentBuilder<TTarget> AddOpt(Expression<Func<TTarget, bool>> selector)
         {
-            var opt = new OptDefinition<T>(selector);
+            var opt = new OptDefinition<TTarget>(selector);
             this._opts.Add(opt);
-            return new OptDefinitionFluentBuilder<T>(opt);
+            return new OptDefinitionFluentBuilder<TTarget>(opt);
         }
 
-        public IArgDefinitionFluentBuilder<T> AddArg(Expression<Func<T, string>> selector)
+        public IArgDefinitionFluentBuilder<TTarget, TProp> AddArg<TProp>(
+            Expression<Func<TTarget, TProp>> selector,
+            Func<string, TProp> formater)
         {
-            var arg = new ArgDefinition<T>(selector);
-            arg.ArgName = PropertyHelper<T>.GetName(selector);
+            var prop = PropertyHelper<TTarget>.GetProperty(selector);
+
+            var arg = new ArgDefinition<TTarget>(prop);
+            arg.ArgName = PropertyHelper<TTarget>.GetName(selector);
+            arg.formaterInfo = formater.Method;
+            arg.formaterTarget = formater.Target;
             this._args.Add(arg);
 
-            return new ArgDefinitionFluentBuilder<T>(arg);
+            return new ArgDefinitionFluentBuilder<TTarget, TProp>(arg);
         }
 
         private static readonly string Spaces32 = new(' ', 32);
@@ -149,7 +155,7 @@ namespace WinExtension.GetOpt
         }
 
 
-        public T GetOpts(string[] args)
+        public TTarget GetOpts(string[] args)
         {
             if (args is null)
                 throw new ArgumentNullException(nameof(args));
@@ -157,16 +163,17 @@ namespace WinExtension.GetOpt
                 throw new ArgumentNullException(nameof(args) + "[]");
 
 
-            Dictionary<string, OptDefinition<T>> shorts =
+            Dictionary<string, OptDefinition<TTarget>> shorts =
                 _opts
                     .Where(x => x.ShortOpt is not null)
                     .ToDictionary(x => x.ShortOpt);
-            Dictionary<string, OptDefinition<T>> longs =
+            Dictionary<string, OptDefinition<TTarget>> longs =
                 _opts
                     .Where(x => x.LongOpt is not null)
                     .ToDictionary(x => x.LongOpt);
 
-            T getOptResult = new T();
+            TTarget getOptResult = new TTarget();
+            int arg_count = 0;
 
             for (var i = 0; i < args.Length; i++)
             {
@@ -174,7 +181,7 @@ namespace WinExtension.GetOpt
 
                 if (ArgumentParsingHelper.IsOpt(args[i]))
                 {
-                    OptDefinition<T> optFound = null;
+                    OptDefinition<TTarget> optFound = null;
                     string argMatch = null;
                     if (arg.StartsWith("--"))
                     {
@@ -194,15 +201,27 @@ namespace WinExtension.GetOpt
                     if (optFound.Argument != OptDefinitionArgument.None)
                     {
                         string argFound = optFound.ParseArgument(args, ref i, argMatch);
-                        PropertyHelper<T>.GetProperty(optFound.ArgumentSelector).SetValue(getOptResult, argFound);
+                        PropertyHelper<TTarget>.GetProperty(optFound.ArgumentSelector).SetValue(getOptResult, argFound);
                     }
 
 
-                    PropertyHelper<T>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
+                    PropertyHelper<TTarget>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
                 }
                 else
                 {
-                    
+                    if(this._args.Count > arg_count)
+                    {
+                        ArgDefinition<TTarget> argFound = this._args[arg_count];
+
+                        object formated = argFound.formaterInfo.Invoke(argFound.formaterTarget, new object?[] { args[i] });
+
+                        argFound.storageInfo.SetValue(getOptResult, formated);
+                        arg_count++;
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
                 }
 
             }

@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace WinExtension.GetOpt
 {
-    public interface IArgDefinitionFluentBuilder<T> where T : new()
+    public interface IArgDefinitionFluentBuilder<T, TProp> where T : new()
     {
-        public IArgDefinitionFluentBuilder<T> WithName(string name);
+        public IArgDefinitionFluentBuilder<T, TProp> WithName(string name);
 
-        public IArgDefinitionFluentBuilder<T> IsRequired(bool isRequired = true);
+        public IArgDefinitionFluentBuilder<T, TProp> IsRequired(bool isRequired = true);
 
-        public IArgDefinitionFluentBuilder<T> IsVariadic(bool isVariadic = true);
+        public IArgDefinitionFluentBuilder<T, TProp> IsVariadic(bool isVariadic = true);
 
-        public IArgDefinitionFluentBuilder<T> HasDescription(string description);
+        public IArgDefinitionFluentBuilder<T, TProp> HasDescription(string description);
 
-        public IArgDefinitionFluentBuilder<T> HasHelpText(string help);
+        public IArgDefinitionFluentBuilder<T, TProp> HasHelpText(string help);
     }
 }
