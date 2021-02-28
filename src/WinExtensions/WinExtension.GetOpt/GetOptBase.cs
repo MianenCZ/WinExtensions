@@ -36,13 +36,13 @@ namespace WinExtension.GetOpt
             return new OptDefinitionFluentBuilder<T>(opt);
         }
 
-        public ArgDefinition<T> AddArg(Expression<Func<T, string>> selector)
+        public IArgDefinitionFluentBuilder<T> AddArg(Expression<Func<T, string>> selector)
         {
             var arg = new ArgDefinition<T>(selector);
             arg.ArgName = PropertyHelper<T>.GetName(selector);
             this._args.Add(arg);
 
-            return arg;
+            return new ArgDefinitionFluentBuilder<T>(arg);
         }
 
         private static readonly string Spaces32 = new(' ', 32);
@@ -171,34 +171,40 @@ namespace WinExtension.GetOpt
             for (var i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
-                OptDefinition<T> optFound = null;
-                string argMatch = null;
-                if (arg.StartsWith("--"))
+
+                if (ArgumentParsingHelper.IsOpt(args[i]))
                 {
-                    optFound = longs.FirstOrDefault(x => arg.Substring(2).StartsWith(x.Key)).Value;
-                    if (optFound is null)
-                        throw new UnexpectedOptionException(arg);
-                    argMatch = $"--{optFound.LongOpt}";
+                    OptDefinition<T> optFound = null;
+                    string argMatch = null;
+                    if (arg.StartsWith("--"))
+                    {
+                        optFound = longs.FirstOrDefault(x => arg.Substring(2).StartsWith(x.Key)).Value;
+                        if (optFound is null)
+                            throw new UnexpectedOptionException(arg);
+                        argMatch = $"--{optFound.LongOpt}";
+                    }
+                    else if (arg.StartsWith("-"))
+                    {
+                        optFound = shorts.FirstOrDefault(x => arg.Substring(1).StartsWith(x.Key)).Value;
+                        if (optFound is null)
+                            throw new UnexpectedOptionException(arg);
+                        argMatch = $"-{optFound.ShortOpt}";
+                    }
+
+                    if (optFound.Argument != OptDefinitionArgument.None)
+                    {
+                        string argFound = optFound.ParseArgument(args, ref i, argMatch);
+                        PropertyHelper<T>.GetProperty(optFound.ArgumentSelector).SetValue(getOptResult, argFound);
+                    }
+
+
+                    PropertyHelper<T>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
                 }
-                else if (arg.StartsWith("-"))
+                else
                 {
-                    optFound = shorts.FirstOrDefault(x => arg.Substring(1).StartsWith(x.Key)).Value;
-                    if (optFound is null)
-                        throw new UnexpectedOptionException(arg);
-                    argMatch = $"-{optFound.ShortOpt}";
-                }
-                
-
-
-
-                if (optFound.Argument != OptDefinitionArgument.None)
-                {
-                    string argFound = optFound.ParseArgument(args, ref i, argMatch);
-                    PropertyHelper<T>.GetProperty(optFound.ArgumentSelector).SetValue(getOptResult, argFound);
+                    
                 }
 
-
-                PropertyHelper<T>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
             }
 
             return getOptResult;

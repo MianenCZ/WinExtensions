@@ -188,7 +188,11 @@ namespace WinExtensions.GetOpt.Tests
                   .HasDescription(
                       "I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. ")
                   .IsIncompatibleWith("-a", "-b");
-            getOpt.AddArg(o => o.arg);
+            getOpt.AddArg(o => o.arg)
+                  .IsRequired()
+                  .HasDescription("prcat")
+                  .HasHelpText("prcat help")
+                  .IsVariadic();
 
 
             _testOutputHelper.WriteLine(getOpt.GenerateUsage());

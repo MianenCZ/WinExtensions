@@ -20,5 +20,6 @@ namespace WinExtension.GetOpt.Dtos
         public bool IsRequired { get; set; } = false;
         public bool IsVariadic { get; set; } = false;
         public string Description { get; set; } = "";
+        public string Help { get; set; } = null;
     }
 }
