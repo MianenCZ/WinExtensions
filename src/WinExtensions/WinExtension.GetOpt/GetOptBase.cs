@@ -4,9 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using FS_Game.Common.Extensions;
-using WinExtension.GetOpt.Dtos;
-using System.Threading.Tasks;
 using WinExtension.Common.Helpers;
+using WinExtension.GetOpt.Dtos;
 using WinExtension.GetOpt.Enums;
 using WinExtension.GetOpt.Exceptions;
 using WinExtension.GetOpt.Helpers;
@@ -15,8 +14,8 @@ namespace WinExtension.GetOpt
 {
     public class GetOptBase<TTarget> where TTarget : new()
     {
-        private readonly List<OptDefinition<TTarget>> _opts;
-        private readonly List<ArgDefinition<TTarget>> _args;
+        internal readonly List<OptDefinition<TTarget>> _opts;
+        internal readonly List<ArgDefinition<TTarget>> _args;
 
         public bool AllowMixedArgsOpts { get; set; } = true;
         public string ApplicationName { get; set; } = "Application";
@@ -38,17 +37,13 @@ namespace WinExtension.GetOpt
 
         public IArgDefinitionFluentBuilder<TTarget, TProp> AddArg<TProp>(
             Expression<Func<TTarget, TProp>> selector,
-            Func<string, TProp> formater)
+            Func<string, TProp> formatter)
         {
-            var prop = PropertyHelper<TTarget>.GetProperty(selector);
-
-            var arg = new ArgDefinition<TTarget>(prop);
+            var arg = new ArgDefinition<TTarget>();
             arg.ArgName = PropertyHelper<TTarget>.GetName(selector);
-            arg.formaterInfo = formater.Method;
-            arg.formaterTarget = formater.Target;
             this._args.Add(arg);
 
-            return new ArgDefinitionFluentBuilder<TTarget, TProp>(arg);
+            return new ArgDefinitionFluentBuilder<TTarget, TProp>(arg, selector, formatter);
         }
 
         private static readonly string Spaces32 = new(' ', 32);
@@ -212,10 +207,7 @@ namespace WinExtension.GetOpt
                     if(this._args.Count > arg_count)
                     {
                         ArgDefinition<TTarget> argFound = this._args[arg_count];
-
-                        object formated = argFound.formaterInfo.Invoke(argFound.formaterTarget, new object?[] { args[i] });
-
-                        argFound.storageInfo.SetValue(getOptResult, formated);
+                        argFound.setter(getOptResult, args[i]);
                         arg_count++;
                     }
                     else

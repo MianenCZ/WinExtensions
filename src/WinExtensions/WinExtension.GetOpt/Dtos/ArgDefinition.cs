@@ -10,13 +10,10 @@ namespace WinExtension.GetOpt.Dtos
 {
     public class ArgDefinition<T> where T: new()
     {
-        internal PropertyInfo storageInfo;
-        internal MethodInfo formaterInfo;
-        internal object formaterTarget;
+        internal Func<T, string, T> setter;
 
-        internal ArgDefinition(PropertyInfo storageInfo)
+        internal ArgDefinition()
         {
-            this.storageInfo = storageInfo;
         }
 
         public string ArgName { get; set; }

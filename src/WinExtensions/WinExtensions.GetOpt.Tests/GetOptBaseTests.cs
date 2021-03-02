@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using WinExtension.GetOpt;
 using WinExtension.GetOpt.Enums;
@@ -31,6 +32,7 @@ namespace WinExtensions.GetOpt.Tests
         public string fileName { get; set; }
         public int lineCount { get; set; }
 
+        public int[] arr { get; set; }
     }
 
 
@@ -262,21 +264,25 @@ namespace WinExtensions.GetOpt.Tests
     {
         #region [Theory]
         [Theory]
-        [InlineData("IamFile", "150")]
-        [InlineData("null", "0")]
-        [InlineData("", "0")]
-        [InlineData("aoscnoasnvoianva", "-42")]
+        [InlineData("IamFile", "150", "1,1,1,1")]
+        [InlineData("null", "0", "1")]
+        [InlineData("", "0", "1,1,1,1,1,1,1,1,1")]
+        [InlineData("aoscnoasnvoianva", "-42", "0")]
         #endregion
         public void BasicOptTests(params string[] args)
         {
             GetOptBase<Args> getOpt = new();
-            getOpt.AddArg(x => x.fileName, s => s);
-            getOpt.AddArg(x => x.lineCount, s => int.Parse(s));
+            getOpt.AddArg(x => x.fileName);
+            getOpt.AddArg(x => x.lineCount);
+            getOpt.AddArg(
+                x => x.arr,
+                s => s.Split(',').Select(x => int.Parse(x)).ToArray());
 
 
             Args res = getOpt.GetOpts(args);
             res.fileName.Should().Be(args[0]);
             res.lineCount.Should().Be(int.Parse(args[1]));
+            res.arr.Length.Should().BeGreaterOrEqualTo(1);
         }
     }
 

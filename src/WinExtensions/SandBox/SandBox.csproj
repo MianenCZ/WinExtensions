@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WinExtension.Common\WinExtension.Common.csproj" />
+  </ItemGroup>
+
 </Project>

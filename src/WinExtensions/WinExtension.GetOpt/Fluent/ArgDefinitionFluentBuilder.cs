@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using WinExtension.Common.Helpers;
 using WinExtension.GetOpt.Dtos;
 using WinExtension.GetOpt.Exceptions;
 
@@ -11,9 +13,20 @@ namespace WinExtension.GetOpt
     public class ArgDefinitionFluentBuilder<TTarget, TProp> : IArgDefinitionFluentBuilder<TTarget, TProp> where TTarget: new()
     {
         private readonly ArgDefinition<TTarget> _arg;
-        public ArgDefinitionFluentBuilder(ArgDefinition<TTarget> arg)
+        private readonly Expression<Func<TTarget, TProp>> _selector;
+        private Func<string, TProp> _formatter = null;
+
+
+        public ArgDefinitionFluentBuilder(
+            ArgDefinition<TTarget> arg, 
+            Expression<Func<TTarget, TProp>> selector,
+            Func<string, TProp> formatter)
         {
             this._arg = arg;
+            this._selector = selector;
+            this._formatter = formatter;
+
+            this._arg.setter = (target, s) => target.SetPropertyValue(_selector, _formatter(s));
         }
 
 
@@ -47,60 +60,10 @@ namespace WinExtension.GetOpt
             return this;
         }
 
-        public IArgDefinitionFluentBuilder<TTarget, TProp> WithCustomFormater(Func<string, TProp> formater)
+        public IArgDefinitionFluentBuilder<TTarget, TProp> WithCustomFormatter(Func<string, TProp> formatter)
         {
-            this._arg.formaterInfo = formater.Method;
+            this._formatter = formatter;
             return this;
-        }
-    }
-
-    internal static class DefaultFormaters
-    {
-        internal static string DefaultFormatToString(string source)
-            => source;
-        internal static int DefaultFormatToInt(string source)
-        {
-            try
-            {
-                return int.Parse(source);
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentFormatException(ex.Message);
-            }
-        }
-        internal static float DefaultFormatToFloat(string source)
-        {
-            try
-            {
-                return float.Parse(source);
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentFormatException(ex.Message);
-            }
-        }
-        internal static double DefaultFormatToDouble(string source)
-        {
-            try
-            {
-                return double.Parse(source);
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentFormatException(ex.Message);
-            }
-        }
-        internal static decimal DefaultFormatToDecimal(string source)
-        {
-            try
-            {
-                return decimal.Parse(source);
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentFormatException(ex.Message);
-            }
         }
     }
 }

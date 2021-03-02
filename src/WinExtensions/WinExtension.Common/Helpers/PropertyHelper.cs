@@ -113,5 +113,24 @@ namespace WinExtension.Common.Helpers
             attribute = null;
             return false;
         }
+
+        
+    }
+
+    public static class PropertyHelper
+    {
+        public static T SetPropertyValue<T, TValue>(this T target, Expression<Func<T, TValue>> memberLamda, TValue value)
+        {
+            if (memberLamda.Body is MemberExpression memberSelectorExpression)
+            {
+                var property = memberSelectorExpression.Member as PropertyInfo;
+                if (property != null)
+                {
+                    property.SetValue(target, value, null);
+                }
+            }
+
+            return target;
+        }
     }
 }

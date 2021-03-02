@@ -4,35 +4,31 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
+using WinExtension.Common.Helpers;
 
 namespace ConsoleApplication3
 {
     class Program
     {
+        static A data = new A();
+
         static void Main(string[] args)
         {
             var mi = typeof(A).GetMethod("Foo");
 
             Console.WriteLine("Regular method");
-            Time(() => new A().Foo(1, 2));
+            Time(() => data.Property = 2);
             Console.WriteLine();
 
-            Console.WriteLine("Invoke");
-            Time(() => mi.Invoke(new A(), new object[] { 1, 2 }));
+            Console.WriteLine("PropertyInfo");
+            Time(() => Set<A, int>(_ => _.Property, 1));
             Console.WriteLine();
 
-            Console.WriteLine("Cached Delegate");
-            var cache = Compile<Action<A, int, int>>(mi);
-            Time(() => cache.Invoke(new A(), 1, 2));
+            Console.WriteLine("Expression");
+            Time(() => data.SetPropertyValue(_ => _.Property, 1));
             Console.WriteLine();
-
-            Console.WriteLine("Dynamic call site caching");
-            Time(() => { dynamic d = new A(); d.Foo(1, 2); });
-            Console.WriteLine();
-
-            Console.WriteLine("Open Delegate");
-            var od = CreateOpenDelegate(mi);
-            Time(() => od.Invoke(new A(), 1, 2));
+            
         }
 
         private static void Time(Action a)
@@ -46,54 +42,20 @@ namespace ConsoleApplication3
             Console.WriteLine(sw.Elapsed);
         }
 
-        private static TDelegate Compile<TDelegate>(MethodInfo mi)
+        public static void Set<T, TValue>(Expression<Func<T, TValue>> setter, int value)
         {
-            ParameterExpression @this = null;
-            if (!mi.IsStatic)
-            {
-                @this = Expression.Parameter(mi.DeclaringType, "this");
-            }
-
-            var parameters = new List<ParameterExpression>();
-            if (@this != null)
-            {
-                parameters.Add(@this);
-            }
-
-            foreach (var parameter in mi.GetParameters())
-            {
-                parameters.Add(Expression.Parameter(parameter.ParameterType, parameter.Name));
-            }
-
-            Expression call = null;
-            if (@this != null)
-            {
-                call = Expression.Call(@this, mi, parameters.Skip(1));
-            }
-            else
-            {
-                call = Expression.Call(mi, parameters);
-            }
-
-            return Expression.Lambda<TDelegate>(call, parameters).Compile();
+            var prop = PropertyHelper<T>.GetProperty(setter);
+            prop.SetValue(data, value);
         }
 
-        private static Action<A, int, int> CreateOpenDelegate(MethodInfo mi)
+        public static void fce<TValue>(Func<string, TValue> form)
         {
-            var openDelegate = Delegate.CreateDelegate(
-                typeof(Action<A, int, int>),
-                null,
-                mi,
-                true);
 
-            return (Action<A, int, int>)openDelegate;
         }
     }
 
     public class A
     {
-        public void Foo(int a, int b)
-        {
-        }
+        public int Property { get; set; }
     }
 }
