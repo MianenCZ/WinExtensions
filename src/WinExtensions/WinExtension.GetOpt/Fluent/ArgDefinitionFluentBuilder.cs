@@ -26,7 +26,7 @@ namespace WinExtension.GetOpt
             this._selector = selector;
             this._formatter = formatter;
 
-            this._arg.setter = (target, s) => target.SetPropertyValue(_selector, _formatter(s));
+            this._arg.Setter = (target, s) => target.SetPropertyValue(_selector, _formatter(s));
         }
 
 
@@ -63,6 +63,18 @@ namespace WinExtension.GetOpt
         public IArgDefinitionFluentBuilder<TTarget, TProp> WithCustomFormatter(Func<string, TProp> formatter)
         {
             this._formatter = formatter;
+            return this;
+        }
+
+        public IArgDefinitionFluentBuilder<TTarget, TProp> IncludeStartingWithComma()
+        {
+            this._arg.IncludeStartingWithComma = true;
+            return this;
+        }
+
+        public IArgDefinitionFluentBuilder<TTarget, TProp> ExcludeStartingWithComma()
+        {
+            this._arg.IncludeStartingWithComma = false;
             return this;
         }
     }

@@ -10,7 +10,8 @@ namespace WinExtension.GetOpt.Dtos
 {
     public class ArgDefinition<T> where T: new()
     {
-        internal Func<T, string, T> setter;
+        internal Func<T, string, T> Setter;
+        internal bool IncludeStartingWithComma = false;
 
         internal ArgDefinition()
         {

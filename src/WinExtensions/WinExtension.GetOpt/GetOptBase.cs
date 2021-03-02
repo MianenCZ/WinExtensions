@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.RegularExpressions;
 using FS_Game.Common.Extensions;
 using WinExtension.Common.Helpers;
 using WinExtension.GetOpt.Dtos;
@@ -173,52 +174,76 @@ namespace WinExtension.GetOpt
             for (var i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
+                bool commaStartError = false;
 
+                //If is opt
                 if (ArgumentParsingHelper.IsOpt(args[i]))
                 {
-                    OptDefinition<TTarget> optFound = null;
-                    string argMatch = null;
-                    if (arg.StartsWith("--"))
-                    {
-                        optFound = longs.FirstOrDefault(x => arg.Substring(2).StartsWith(x.Key)).Value;
-                        if (optFound is null)
-                            throw new UnexpectedOptionException(arg);
-                        argMatch = $"--{optFound.LongOpt}";
-                    }
-                    else if (arg.StartsWith("-"))
-                    {
-                        optFound = shorts.FirstOrDefault(x => arg.Substring(1).StartsWith(x.Key)).Value;
-                        if (optFound is null)
-                            throw new UnexpectedOptionException(arg);
-                        argMatch = $"-{optFound.ShortOpt}";
-                    }
+                    (OptDefinition<TTarget> optFound, string argMatch) = FindOpt(arg);
+                    var tmp= FindOpt(arg);
 
-                    if (optFound.Argument != OptDefinitionArgument.None)
+                    if (optFound is not null)
                     {
-                        string argFound = optFound.ParseArgument(args, ref i, argMatch);
-                        PropertyHelper<TTarget>.GetProperty(optFound.ArgumentSelector).SetValue(getOptResult, argFound);
-                    }
+                        if (optFound.Argument != OptDefinitionArgument.None)
+                        {
+                            string argFound = optFound.ParseArgument(args, ref i, argMatch);
+                            PropertyHelper<TTarget>.GetProperty(optFound.ArgumentSelector)
+                                                   .SetValue(getOptResult, argFound);
+                        }
 
+                        PropertyHelper<TTarget>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
 
-                    PropertyHelper<TTarget>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
-                }
-                else
-                {
-                    if(this._args.Count > arg_count)
-                    {
-                        ArgDefinition<TTarget> argFound = this._args[arg_count];
-                        argFound.setter(getOptResult, args[i]);
-                        arg_count++;
+                        continue;
                     }
                     else
                     {
-                        throw new NotImplementedException();
+                        commaStartError = true;
                     }
+
+                }
+
+                // The it is an argument
+                if (this._args.Count > arg_count)
+                {
+                    ArgDefinition<TTarget> argFound = this._args[arg_count];
+                    if (!argFound.IncludeStartingWithComma && commaStartError)
+                    {
+                        // arg is of format -... but argument does not accept it
+                        throw new UnexpectedOptionException(arg);
+                    }
+                    argFound.Setter(getOptResult, args[i]);
+                    arg_count++;
+                }
+                else
+                {
+                    if(commaStartError)
+                        throw new UnexpectedOptionException(arg);
+                    throw new NotImplementedException();
                 }
 
             }
 
             return getOptResult;
+
+
+            (OptDefinition<TTarget> optFound, string argMatch) FindOpt(string arg)
+            {
+                OptDefinition<TTarget> optFound;
+
+                if (arg.StartsWith("--"))
+                {
+                    optFound = longs.FirstOrDefault(x => arg.Substring(2).StartsWith(x.Key)).Value;
+                    if (optFound is not null)
+                        return (optFound, $"--{optFound.LongOpt}");
+                }
+                else if (arg.StartsWith("-"))
+                {
+                    optFound = shorts.FirstOrDefault(x => arg.Substring(1).StartsWith(x.Key)).Value;
+                    if (optFound is not null)
+                        return (optFound, $"-{optFound.ShortOpt}");
+                }
+                return (null, null);
+            }
         }
     }
 }

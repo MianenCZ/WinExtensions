@@ -263,23 +263,31 @@ namespace WinExtensions.GetOpt.Tests
     public class ArgTests
     {
         #region [Theory]
+
         [Theory]
         [InlineData("IamFile", "150", "1,1,1,1")]
         [InlineData("null", "0", "1")]
         [InlineData("", "0", "1,1,1,1,1,1,1,1,1")]
         [InlineData("aoscnoasnvoianva", "-42", "0")]
+
         #endregion
+
         public void BasicOptTests(params string[] args)
         {
             GetOptBase<Args> getOpt = new();
-            getOpt.AddArg(x => x.fileName);
-            getOpt.AddArg(x => x.lineCount);
+            getOpt.AddArg(x => x.fileName)
+                  .IncludeStartingWithComma();
+            getOpt.AddArg(x => x.lineCount)
+                  .IncludeStartingWithComma();
             getOpt.AddArg(
-                x => x.arr,
-                s => s.Split(',').Select(x => int.Parse(x)).ToArray());
+                      x => x.arr,
+                      s => s.Split(',')
+                            .Select(x => int.Parse(x))
+                            .ToArray())
+                  .IncludeStartingWithComma();
 
 
-            Args res = getOpt.GetOpts(args);
+            var res = getOpt.GetOpts(args);
             res.fileName.Should().Be(args[0]);
             res.lineCount.Should().Be(int.Parse(args[1]));
             res.arr.Length.Should().BeGreaterOrEqualTo(1);
@@ -392,6 +400,10 @@ namespace WinExtensions.GetOpt.Tests
         #endregion
         public void UnexpectedOptionExceptionTests(params string[] args)
         {
+            //app file -42
+
+
+
             GetOptBase<Opt2> getOpt = new GetOptBase<Opt2>();
             getOpt.AddOpt(o => o.a)
                   .HasShortName("a");
