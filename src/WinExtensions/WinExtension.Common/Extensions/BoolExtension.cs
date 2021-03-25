@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace FS_Game.Common.Extensions
+namespace WinExtension.Common.Extensions
 {
     public static class BoolExtension
     {
