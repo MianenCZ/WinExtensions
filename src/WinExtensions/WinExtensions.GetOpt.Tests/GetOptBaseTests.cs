@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using FluentAssertions;
+using WinExtension.Common.Helpers;
 using WinExtension.GetOpt;
 using WinExtension.GetOpt.Enums;
 using WinExtension.GetOpt.Exceptions;
@@ -16,6 +18,8 @@ namespace WinExtensions.GetOpt.Tests
         public string aArg { get; set; }
 
         public string arg { get; set; }
+
+        public Guid g { get; set; }
     }
 
     public class Opt2
@@ -197,6 +201,7 @@ namespace WinExtensions.GetOpt.Tests
                   .HasDescription(
                       "I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. I am some a longed option. ")
                   .IsIncompatibleWith("-a", "-b");
+            
             getOpt.AddArg(o => o.arg, s => s)
                   .IsRequired()
                   .HasDescription("prcat")
@@ -274,6 +279,11 @@ namespace WinExtensions.GetOpt.Tests
 
         public void BasicOptTests(params string[] args)
         {
+            GetOptBase<Opts> opt2 = new GetOptBase<Opts>();
+            opt2.AddArg(x => x.g, Guid.Parse);
+
+
+
             GetOptBase<Args> getOpt = new();
             getOpt.AddArg(x => x.fileName)
                   .IncludeStartingWithComma();
@@ -282,7 +292,7 @@ namespace WinExtensions.GetOpt.Tests
             getOpt.AddArg(
                       x => x.arr,
                       s => s.Split(',')
-                            .Select(x => int.Parse(x))
+                            .Select(int.Parse)
                             .ToArray())
                   .IncludeStartingWithComma();
 
@@ -296,6 +306,14 @@ namespace WinExtensions.GetOpt.Tests
 
     public class OptTests
     {
+        public void Fce(TextReader reader)
+        {
+
+        }
+
+
+
+
         #region [Theory]
         [Theory]
         [InlineData(new string[] { }, false, false, false)]
@@ -400,10 +418,6 @@ namespace WinExtensions.GetOpt.Tests
         #endregion
         public void UnexpectedOptionExceptionTests(params string[] args)
         {
-            //app file -42
-
-
-
             GetOptBase<Opt2> getOpt = new GetOptBase<Opt2>();
             getOpt.AddOpt(o => o.a)
                   .HasShortName("a");

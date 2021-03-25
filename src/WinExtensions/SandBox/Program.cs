@@ -6,56 +6,51 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using WinExtension.Common.Helpers;
+using WinExtension.GetOpt;
 
 namespace ConsoleApplication3
 {
+
+    public class Cmd
+    {
+        public bool i { get; set; }
+        public string in_file { get; set; }
+
+        public bool o { get; set; }
+        public string out_file { get; set; }
+
+        public Guid code { get; set; }
+    }
+
     class Program
     {
-        static A data = new A();
-
+        // app.exe -i file.in -o file.out 66f6eafd-7b49-48e4-9ee2-f979b272a32b
         static void Main(string[] args)
         {
-            var mi = typeof(A).GetMethod("Foo");
-
-            Console.WriteLine("Regular method");
-            Time(() => data.Property = 2);
-            Console.WriteLine();
-
-            Console.WriteLine("PropertyInfo");
-            Time(() => Set<A, int>(_ => _.Property, 1));
-            Console.WriteLine();
-
-            Console.WriteLine("Expression");
-            Time(() => data.SetPropertyValue(_ => _.Property, 1));
-            Console.WriteLine();
-            
+            var getOpt = CreateGetOpt();
+            Console.WriteLine(getOpt.GenerateUsage());
         }
 
-        private static void Time(Action a)
+        static GetOptBase<Cmd> CreateGetOpt()
         {
-            var sw = Stopwatch.StartNew();
-            for (int i = 0; i < 10000000; i++)
-            {
-                a();
-            }
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed);
-        }
+            GetOptBase<Cmd> getOpt = new();
+            getOpt.AddOpt(_ => _.i)
+                  .HasShortName("i")
+                  .HasLongName("in")
+                  .WithRequiredArgument(_ => _.in_file)
+                  .WithName("input file");
 
-        public static void Set<T, TValue>(Expression<Func<T, TValue>> setter, int value)
-        {
-            var prop = PropertyHelper<T>.GetProperty(setter);
-            prop.SetValue(data, value);
-        }
+            getOpt.AddOpt(_ => _.o)
+                  .HasShortName("o")
+                  .HasLongName("out")
+                  .WithRequiredArgument(_ => _.out_file)
+                  .WithName("output file");
 
-        public static void fce<TValue>(Func<string, TValue> form)
-        {
-
+            getOpt.AddArg(_ => _.code, s => Guid.Parse(s))
+                  .WithName("Code");
+            return getOpt;
         }
     }
 
-    public class A
-    {
-        public int Property { get; set; }
-    }
+    
 }

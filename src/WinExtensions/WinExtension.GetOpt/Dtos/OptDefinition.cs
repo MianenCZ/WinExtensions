@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
-using FS_Game.Common.Extensions;
+using WinExtension.Common.Extensions;
 using WinExtension.GetOpt.Enums;
 
 namespace WinExtension.GetOpt.Dtos

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
-using FS_Game.Common.Extensions;
+using WinExtension.Common.Extensions;
 using WinExtension.Common.Helpers;
 using WinExtension.GetOpt.Dtos;
 using WinExtension.GetOpt.Enums;

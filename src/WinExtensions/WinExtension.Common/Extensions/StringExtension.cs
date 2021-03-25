@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WinExtension.Common.Helpers;
 
-namespace FS_Game.Common.Extensions
+namespace WinExtension.Common.Extensions
 {
     public static class StringExtension
     {

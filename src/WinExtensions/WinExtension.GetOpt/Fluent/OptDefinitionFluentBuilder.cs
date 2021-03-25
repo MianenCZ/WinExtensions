@@ -50,6 +50,7 @@ namespace WinExtension.GetOpt
             _opt.ArgumentSelector = selector;
             _opt.ArgumentName =  PropertyHelper<T>.GetName(selector);
             _opt.Argument = OptDefinitionArgument.Required;
+            _opt.ArgumentFormat = OptDefinitionArgumentFormat.EqualSign;
             return new OptWithArgumentDefinitionFluentBuilder<T>(this._opt);
         }
 
