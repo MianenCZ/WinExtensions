@@ -28,6 +28,15 @@ namespace ConsoleApplication3
         // app.exe -i file.in -o file.out 66f6eafd-7b49-48e4-9ee2-f979b272a32b
         static void Main(string[] args)
         {
+            int ten = 10;
+            Console.WriteLine(ten.InRange(0,5));
+            Console.WriteLine(ten.InRange(0,100));
+            Console.WriteLine(ten.InRange(20,100));
+
+            return;
+
+
+
             var getOpt = CreateGetOpt();
             //Console.WriteLine(getOpt.GenerateUsage());
 

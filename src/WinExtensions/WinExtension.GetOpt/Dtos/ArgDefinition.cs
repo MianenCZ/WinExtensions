@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using WinExtension.Common.Extensions;
 
 namespace WinExtension.GetOpt.Dtos
 {
@@ -23,5 +24,7 @@ namespace WinExtension.GetOpt.Dtos
         public bool IsVariadic { get; set; } = false;
         public string Description { get; set; } = "";
         public string Help { get; set; } = null;
+
+        public string VerboseName => this.ArgName.ToMacroCase();
     }
 }

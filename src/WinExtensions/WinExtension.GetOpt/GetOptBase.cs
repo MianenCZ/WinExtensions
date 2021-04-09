@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
@@ -51,7 +53,42 @@ namespace WinExtension.GetOpt
             return new ArgDefinitionFluentBuilder<TTarget, TProp>(arg, selector, formatter);
         }
 
-        public IOptDefinitionFluentBuilder<TTarget> AddHelp(bool ExitOnHelp = true)
+        private void RunHelp(string a, string s1, bool exitOnHelp)
+        {
+            if (s1 is null)
+            {
+                Console.WriteLine(this.GenerateUsage());
+            }
+            else
+            {
+                StringBuilder bld = new StringBuilder();
+                var opts = this._opts.Where(x => x.LongOpt == s1 || x.ShortOpt == s1);
+
+                if (!opts.Any())
+                {
+                    Console.WriteLine(this.GenerateUsage());
+                }
+                else
+                {
+                    Console.WriteLine(this.FormatUsage().ToString().Align(80));
+                    foreach (var opt in opts)
+                    {
+                        FormatOption(bld, opt);
+                    }
+                    Console.WriteLine(bld.ToString().Align(80));
+                }
+            }
+
+            if (exitOnHelp)
+                Environment.Exit(0);
+        }
+
+        #region [ FORMATING ]
+
+        
+
+
+        public IOptDefinitionFluentBuilder<TTarget> AddHelp(bool exitOnHelp = true)
         {
             return this.AddOpt(null)
                 .HasLongName("help")
@@ -59,36 +96,7 @@ namespace WinExtension.GetOpt
                 .HasDescription("Show this help")
                 .WithOptionalArgument(null)
                 .FormattedAs(OptDefinitionArgumentFormat.NextArg)
-                .AddRawTrigger((s, s1) =>
-                {
-
-                    if (s1 is null)
-                    {
-                        Console.WriteLine(this.GenerateUsage());
-                    }
-                    else
-                    {
-                        StringBuilder bld = new StringBuilder();
-                        var opts = this._opts.Where(x => x.LongOpt == s1 || x.ShortOpt == s1);
-
-                        if (!opts.Any())
-                        {
-                            Console.WriteLine(this.GenerateUsage());
-                        }
-                        else
-                        {
-                            Console.WriteLine(this.FormatUsage().ToString().Align(80));
-                            foreach (var opt in opts)
-                            {
-                                FormatOption(bld, opt);
-                            }
-                            Console.WriteLine(bld.ToString().Align(80));
-                        }
-                    }
-                    
-                    if(ExitOnHelp)
-                        Environment.Exit(0);
-                });
+                .AddRawTrigger((s, s1) => RunHelp(s, s1, exitOnHelp));
         }
 
         private static readonly string Spaces32 = new(' ', 32);
@@ -213,17 +221,22 @@ namespace WinExtension.GetOpt
             bld.Append(Environment.NewLine);
         }
 
+        #endregion
+
         public TTarget GetOpts(params string[] args)
         {
             try
             {
                 return GetOptsExecute(args);
             }
-            catch (UnexpectedOptionException e)
+            catch (Exception ex)
             {
-                Console.WriteLine(e);
-                throw;
+                Console.WriteLine(ex.Message);
+                Console.WriteLine();
+                RunHelp("", null, true);
             }
+
+            throw new NotImplementedException("Unreachable code");
         }
 
         private TTarget GetOptsExecute(string[] args)
@@ -242,6 +255,8 @@ namespace WinExtension.GetOpt
                 _opts
                     .Where(x => x.LongOpt is not null)
                     .ToDictionary(x => x.LongOpt);
+
+            HashSet<OptDefinition<TTarget>> requiredOpts = _opts.Where(x => x.IsRequired).ToHashSet();
 
             TTarget getOptResult = new TTarget();
             int arg_count = 0;
@@ -276,6 +291,9 @@ namespace WinExtension.GetOpt
                         if(optFound.Selector is not null)
                             getOptResult.SetPropertyValue(optFound.Selector, true);
 
+                        if (optFound.IsRequired && requiredOpts.Contains(optFound))
+                            requiredOpts.Remove(optFound);
+
                         optFound.OnMatched?.Invoke(getOptResult);
                         continue;
                     }
@@ -306,6 +324,29 @@ namespace WinExtension.GetOpt
                     throw new NotImplementedException();
                 }
 
+
+               
+
+            }
+
+            if (requiredOpts.Any())
+            {
+                if (requiredOpts.Count() > 1)
+                    throw new MissingArgumentException($"Options {requiredOpts.Select(x => x.Verbose).JoinToString(", ")} are required");
+                throw new MissingArgumentException($"Option {requiredOpts.First().Verbose} is required");
+            }
+
+            int maxRequired = this._args.Indexed().Where(x => x.value.IsRequired).Max(x => x.index);
+            if (arg_count <= maxRequired)
+            {
+                var tmp = this._args.Indexed().ToArray();
+                var tmp2 = this._args.Indexed().Where(x => x.index.InRangeInc(arg_count, maxRequired)).ToArray();
+                var missingArgs = this._args
+                               .Indexed()
+                               .Where(x => x.index.InRangeInc(arg_count, maxRequired))
+                               .Select(x => x.value.VerboseName)
+                               .JoinToString(", ");
+                throw new MissingArgumentException($"Missing arguments {missingArgs}.");
             }
 
             return getOptResult;
