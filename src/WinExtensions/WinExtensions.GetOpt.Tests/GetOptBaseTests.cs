@@ -172,7 +172,7 @@ namespace WinExtensions.GetOpt.Tests
             getOpt.ApplicationName = "TestApp.exe";
             getOpt.TopDescription =
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eget sodales nibh. Sed a justo id velit tristique iaculis. Aenean mauris ante, luctus eget elit eget, accumsan aliquet erat.";
-            getOpt.BootomDescription =
+            getOpt.BottomDescription =
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eget sodales nibh. Sed a justo id velit tristique iaculis. Aenean mauris ante, luctus eget elit eget, accumsan aliquet erat. Quisque posuere sagittis ex, sed porttitor ex elementum vitae. Nulla viverra velit vel sapien dictum ultrices. Sed neque nibh, gravida nec mattis ut, bibendum quis lectus. Ut euismod tempor turpis. Nullam ac luctus libero, in vestibulum enim. Nullam maximus posuere metus sed tincidunt. Curabitur eget est quam. Aliquam ac ligula consectetur, pharetra elit at, viverra lectus. Nunc venenatis iaculis risus, id molestie mi malesuada id. Maecenas placerat blandit lacus, ut fermentum mi maximus nec. Nulla vehicula dapibus quam.";
 
 

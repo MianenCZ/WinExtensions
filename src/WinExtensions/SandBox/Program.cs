@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
+using WinExtension.Common.Extensions;
 using WinExtension.Common.Helpers;
 using WinExtension.GetOpt;
 
@@ -28,7 +29,11 @@ namespace ConsoleApplication3
         static void Main(string[] args)
         {
             var getOpt = CreateGetOpt();
-            Console.WriteLine(getOpt.GenerateUsage());
+            //Console.WriteLine(getOpt.GenerateUsage());
+
+            Console.WriteLine(getOpt.GetOpts("-h", "i").ToJson());
+
+            Console.WriteLine("END!");
         }
 
         static GetOptBase<Cmd> CreateGetOpt()
@@ -38,13 +43,16 @@ namespace ConsoleApplication3
                   .HasShortName("i")
                   .HasLongName("in")
                   .WithRequiredArgument(_ => _.in_file)
-                  .WithName("input file");
+                  .WithName("input file")
+                  .HasDescription(
+                      "Defines source of input data. File specified in 'INPUT_FILE' must be writable. `stdin` is used when not set");
 
             getOpt.AddOpt(_ => _.o)
                   .HasShortName("o")
                   .HasLongName("out")
                   .WithRequiredArgument(_ => _.out_file)
                   .WithName("output file");
+            getOpt.AddHelp();
 
             getOpt.AddArg(_ => _.code, s => Guid.Parse(s))
                   .WithName("Code");

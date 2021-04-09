@@ -77,5 +77,11 @@ namespace WinExtension.GetOpt
             this._arg.IncludeStartingWithComma = false;
             return this;
         }
+
+        public IArgDefinitionFluentBuilder<TTarget, TProp> AddOnMatchedTrigger(Action<TTarget> trigger)
+        {
+            this._arg.OnMatched = trigger;
+            return this;
+        }
     }
 }

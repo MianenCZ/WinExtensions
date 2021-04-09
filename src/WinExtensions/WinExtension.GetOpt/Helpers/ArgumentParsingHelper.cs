@@ -32,7 +32,10 @@ namespace WinExtension.GetOpt.Helpers
                 case OptDefinitionArgumentFormat.NextArg:
                 {
                     if (args.Length <= i + 1)
-                        throw new MissingArgumentException(opt.ArgumentName);
+                        if (opt.Argument == OptDefinitionArgument.Optional)
+                            return null;
+                        else
+                            throw new MissingArgumentException(opt.ArgumentName);
                     return args[++i];
                 }
                 case OptDefinitionArgumentFormat.EqualSign:

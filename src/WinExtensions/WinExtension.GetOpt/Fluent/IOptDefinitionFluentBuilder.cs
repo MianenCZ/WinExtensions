@@ -17,5 +17,7 @@ namespace WinExtension.GetOpt
         public IOptDefinitionFluentBuilder<T> HasDescription(string description);
         public IOptDefinitionFluentBuilder<T> IsIncompatibleWith(params string[] incompatibilities);
         public IOptDefinitionFluentBuilder<T> Requires(params string[] requirements);
+        public IOptDefinitionFluentBuilder<T> AddMatchTrigger(Action<T> trigger);
+        public IOptDefinitionFluentBuilder<T> AddRawTrigger(Action<string,string> trigger);
     }
 }

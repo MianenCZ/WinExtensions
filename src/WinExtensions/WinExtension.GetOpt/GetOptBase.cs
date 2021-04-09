@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using WinExtension.Common.Extensions;
 using WinExtension.Common.Helpers;
 using WinExtension.GetOpt.Dtos;
@@ -21,7 +23,9 @@ namespace WinExtension.GetOpt
         public bool AllowMixedArgsOpts { get; set; } = true;
         public string ApplicationName { get; set; } = "Application";
         public string TopDescription { get; set; }
-        public string BootomDescription { get; set; }
+        public string BottomDescription { get; set; }
+
+        public MultiCharShort MultiCharShort { get; set; }
 
         public GetOptBase()
         {
@@ -47,6 +51,46 @@ namespace WinExtension.GetOpt
             return new ArgDefinitionFluentBuilder<TTarget, TProp>(arg, selector, formatter);
         }
 
+        public IOptDefinitionFluentBuilder<TTarget> AddHelp(bool ExitOnHelp = true)
+        {
+            return this.AddOpt(null)
+                .HasLongName("help")
+                .HasShortName("h")
+                .HasDescription("Show this help")
+                .WithOptionalArgument(null)
+                .FormattedAs(OptDefinitionArgumentFormat.NextArg)
+                .AddRawTrigger((s, s1) =>
+                {
+
+                    if (s1 is null)
+                    {
+                        Console.WriteLine(this.GenerateUsage());
+                    }
+                    else
+                    {
+                        StringBuilder bld = new StringBuilder();
+                        var opts = this._opts.Where(x => x.LongOpt == s1 || x.ShortOpt == s1);
+
+                        if (!opts.Any())
+                        {
+                            Console.WriteLine(this.GenerateUsage());
+                        }
+                        else
+                        {
+                            Console.WriteLine(this.FormatUsage().ToString().Align(80));
+                            foreach (var opt in opts)
+                            {
+                                FormatOption(bld, opt);
+                            }
+                            Console.WriteLine(bld.ToString().Align(80));
+                        }
+                    }
+                    
+                    if(ExitOnHelp)
+                        Environment.Exit(0);
+                });
+        }
+
         private static readonly string Spaces32 = new(' ', 32);
         private static readonly string Spaces30 = new(' ', 30);
         private static readonly string Spaces7 = new(' ', 7);
@@ -55,6 +99,36 @@ namespace WinExtension.GetOpt
         {
             StringBuilder bld = new();
             //Generate Usage
+
+            var usageBld = FormatUsage();
+
+            bld.Append(usageBld.ToString().Align(80).Indent(Spaces7, false));
+            bld.Append(Environment.NewLine);
+            bld.AppendLine(this.TopDescription.Align(80));
+            bld.Append(Environment.NewLine);
+
+            //Generate Options
+            bld.AppendLine("Options:");
+            foreach (OptDefinition<TTarget> opt in this._opts.OrderBy(x => (x.ShortOpt is not null) ? x.ShortOpt : x.LongOpt))
+            {
+                FormatOption(bld, opt);
+            }
+
+            bld.Append(Environment.NewLine);
+            //Generate arguments
+            bld.AppendLine("Arguments:");
+            foreach (ArgDefinition<TTarget> arg in this._args)
+            {
+                FormatArgument(bld, arg);
+            }
+
+            bld.Append(Environment.NewLine);
+            bld.Append(this.BottomDescription.Align(80));
+            return bld.ToString();
+        }
+
+        private StringBuilder FormatUsage()
+        {
             StringBuilder usageBld = new();
             usageBld.AppendFormat("Usage: {0} ", this.ApplicationName);
             foreach (var arg in this._opts.Where(x => x.IsRequired))
@@ -78,80 +152,81 @@ namespace WinExtension.GetOpt
                 usageBld.Append(' ');
             }
 
-            bld.Append(usageBld.ToString().Align(80).Indent(Spaces7, false));
-            bld.Append(Environment.NewLine);
-            bld.AppendLine(this.TopDescription.Align(80));
-            bld.Append(Environment.NewLine);
-            //Generate Options
-            bld.AppendLine("Options:");
-            foreach (var opt in this._opts.OrderBy(x => (x.ShortOpt is not null) ? x.ShortOpt : x.LongOpt))
-            {
-                StringBuilder leftBld = new StringBuilder(30);
-                if (opt.ShortOpt is not null)
-                    leftBld.AppendFormat("  -{0}", opt.ShortOpt);
-                else
-                    leftBld.AppendFormat("    ");
-                if (opt.LongOpt is not null)
-                    leftBld.AppendFormat("  --{0}", opt.LongOpt);
-                leftBld.Append(opt.VerboseArg);
-                string left = leftBld.ToString();
-                if (left.Length < 30)
-                {
-                    bld.Append(left.PadRight(30));
-                }
-                else
-                {
-                    bld.AppendLine(left);
-                    bld.Append(Spaces30);
-                }
-
-                string right = opt.Description.Align(48).Indent(Spaces32, false);
-
-                bld.Append(right);
-                bld.Append(Environment.NewLine);
-                if (opt.IncompatibleWith.Any())
-                {
-                    string str = $"Incompatible with {string.Join(", ", opt.IncompatibleWith)}.";
-                    bld.Append(str.Align(48).Indent(Spaces32, true));
-                    bld.Append(Environment.NewLine);
-                }
-
-                if (opt.Requires.Any())
-                {
-                    string str = $"Requires {string.Join(", ", opt.Requires)}.";
-                    bld.Append(str.Align(48).Indent(Spaces32, true));
-                    bld.Append(Environment.NewLine);
-                }
-            }
-
-            bld.Append(Environment.NewLine);
-            //Generate arguments
-            bld.AppendLine("Arguments:");
-            foreach (var arg in this._args)
-            {
-                string left = $"  {arg.ArgName.ToMacroCase()}";
-                if (left.Length < 30)
-                {
-                    bld.Append(left.PadRight(30));
-                }
-                else
-                {
-                    bld.AppendLine(left);
-                    bld.Append(Spaces30);
-                }
-
-                string right = arg.Description.Align(48).Indent(Spaces32, false);
-                bld.Append(right);
-                bld.Append(Environment.NewLine);
-            }
-
-            bld.Append(Environment.NewLine);
-            bld.Append(this.BootomDescription.Align(80));
-            return bld.ToString();
+            return usageBld;
         }
 
+        private static void FormatOption(StringBuilder bld, OptDefinition<TTarget> opt)
+        {
+            StringBuilder leftBld = new StringBuilder(30);
+            if (opt.ShortOpt is not null)
+                leftBld.AppendFormat("  -{0}", opt.ShortOpt);
+            else
+                leftBld.AppendFormat("    ");
+            if (opt.LongOpt is not null)
+                leftBld.AppendFormat("  --{0}", opt.LongOpt);
+            leftBld.Append(opt.VerboseArg);
+            string left = leftBld.ToString();
+            if (left.Length < 30)
+            {
+                bld.Append(left.PadRight(30));
+            }
+            else
+            {
+                bld.AppendLine(left);
+                bld.Append(Spaces30);
+            }
 
-        public TTarget GetOpts(string[] args)
+            string right = opt.Description.Align(48).Indent(Spaces32, false);
+
+            bld.Append(right);
+            bld.Append(Environment.NewLine);
+            if (opt.IncompatibleWith.Any())
+            {
+                string str = $"Incompatible with {string.Join(", ", opt.IncompatibleWith)}.";
+                bld.Append(str.Align(48).Indent(Spaces32, true));
+                bld.Append(Environment.NewLine);
+            }
+
+            if (opt.Requires.Any())
+            {
+                string str = $"Requires {string.Join(", ", opt.Requires)}.";
+                bld.Append(str.Align(48).Indent(Spaces32, true));
+                bld.Append(Environment.NewLine);
+            }
+        }
+
+        private static void FormatArgument(StringBuilder bld, ArgDefinition<TTarget> arg)
+        {
+            string left = $"  {arg.ArgName.ToMacroCase()}";
+            if (left.Length < 30)
+            {
+                bld.Append(left.PadRight(30));
+            }
+            else
+            {
+                bld.AppendLine(left);
+                bld.Append(Spaces30);
+            }
+
+            string right = arg.Description.Align(48).Indent(Spaces32, false);
+            bld.Append(right);
+            bld.Append(Environment.NewLine);
+        }
+
+        public TTarget GetOpts(params string[] args)
+        {
+            try
+            {
+                return GetOptsExecute(args);
+            }
+            catch (UnexpectedOptionException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        private TTarget GetOptsExecute(string[] args)
         {
             if (args is null)
                 throw new ArgumentNullException(nameof(args));
@@ -182,17 +257,26 @@ namespace WinExtension.GetOpt
                     (OptDefinition<TTarget> optFound, string argMatch) = FindOpt(arg);
                     var tmp= FindOpt(arg);
 
+
                     if (optFound is not null)
                     {
                         if (optFound.Argument != OptDefinitionArgument.None)
                         {
                             string argFound = optFound.ParseArgument(args, ref i, argMatch);
-                            PropertyHelper<TTarget>.GetProperty(optFound.ArgumentSelector)
-                                                   .SetValue(getOptResult, argFound);
+                            if (argFound is not null)
+                            {
+                                if (optFound.Selector is not null)
+                                    getOptResult.SetPropertyValue(optFound.ArgumentSelector, argFound);
+                            }
+
+                            optFound.OnRawMatched?.Invoke(argMatch, argFound);
                         }
 
-                        PropertyHelper<TTarget>.GetProperty(optFound.Selector).SetValue(getOptResult, true);
+                        //Store value into result
+                        if(optFound.Selector is not null)
+                            getOptResult.SetPropertyValue(optFound.Selector, true);
 
+                        optFound.OnMatched?.Invoke(getOptResult);
                         continue;
                     }
                     else
@@ -211,6 +295,7 @@ namespace WinExtension.GetOpt
                         // arg is of format -... but argument does not accept it
                         throw new UnexpectedOptionException(arg);
                     }
+                    //Call setter to store value
                     argFound.Setter(getOptResult, args[i]);
                     arg_count++;
                 }
@@ -225,7 +310,7 @@ namespace WinExtension.GetOpt
 
             return getOptResult;
 
-
+            //matches options against long and the against short set of options
             (OptDefinition<TTarget> optFound, string argMatch) FindOpt(string arg)
             {
                 OptDefinition<TTarget> optFound;

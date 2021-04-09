@@ -12,6 +12,7 @@ namespace WinExtension.GetOpt.Dtos
     {
         internal Func<T, string, T> Setter;
         internal bool IncludeStartingWithComma = false;
+        internal Action<T> OnMatched = null;
 
         internal ArgDefinition()
         {

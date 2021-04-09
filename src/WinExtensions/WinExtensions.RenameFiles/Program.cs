@@ -82,27 +82,37 @@ namespace WinExtensions.RenameFiles
 
         public RenameFileGetOpt()
         {
+            this.ApplicationName = "winrn";
+
             this.AddArg(x => x.From, _ => _)
                 .ExcludeStartingWithComma()
                 .IsVariadic(false)
                 .IsRequired(true)
-                .WithName("From");
+                .WithName("From")
+                .HasDescription("Defines original pattern to rename");
 
             this.AddArg(x => x.To, _ => _)
                 .ExcludeStartingWithComma()
                 .IsVariadic(false)
                 .IsRequired(true)
-                .WithName("To");
+                .WithName("To")
+                .HasDescription("Defines new pattern to rename to");
 
             this.AddOpt(x => x.Recursive)
-                .HasShortName("r");
+                .HasShortName("r")
+                .HasLongName("recursive")
+                .HasDescription("Search subdirectories for files to rename");
 
             this.AddOpt(x => x.HasStartDirectory)
-                .WithRequiredArgument(x => x.StartDirectory)
-                .HasShortName("d");
+                .WithRequiredArgument(x => x.StartDirectory).WithName("DIR")
+                .HasShortName("d")
+                .HasDescription("Define start directory");
 
             this.AddOpt(x => x.RenameDirectories)
-                .HasShortName("D");
+                .HasShortName("D")
+                .HasDescription("Rename also directories");
+
+            this.AddHelp(true);
         }
     }
 }
