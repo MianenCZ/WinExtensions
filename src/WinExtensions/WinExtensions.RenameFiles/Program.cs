@@ -84,14 +84,14 @@ namespace WinExtensions.RenameFiles
         {
             this.ApplicationName = "winrn";
 
-            this.AddArg(x => x.From, _ => _)
+            this.AddArg(x => x.From)
                 .ExcludeStartingWithComma()
                 .IsVariadic(false)
                 .IsRequired(true)
                 .WithName("From")
                 .HasDescription("Defines original pattern to rename");
 
-            this.AddArg(x => x.To, _ => _)
+            this.AddArg(x => x.To)
                 .ExcludeStartingWithComma()
                 .IsVariadic(false)
                 .IsRequired(true)
@@ -99,8 +99,7 @@ namespace WinExtensions.RenameFiles
                 .HasDescription("Defines new pattern to rename to");
 
             this.AddOpt(x => x.Recursive)
-                .HasShortName("r")
-                .HasLongName("recursive")
+                .HasNames("r", "recursive")
                 .HasDescription("Search subdirectories for files to rename");
 
             this.AddOpt(x => x.HasStartDirectory)
