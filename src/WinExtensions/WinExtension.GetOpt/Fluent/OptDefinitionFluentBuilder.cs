@@ -18,7 +18,7 @@ namespace WinExtension.GetOpt
 
         public IOptDefinitionFluentBuilder<T> HasShortName(string shortName)
         {
-            _opt.ShortOpt = shortName;
+            _opt.ShortOpt = $"{shortName}";
             return this;
         }
 
@@ -38,7 +38,7 @@ namespace WinExtension.GetOpt
             Expression<Func<T, string>> selector)
         {
             _opt.ArgumentSelector = selector;
-            _opt.ArgumentName = PropertyHelper<T>.GetName(selector);
+            _opt.ArgumentName = (selector is not null) ? PropertyHelper<T>.GetName(selector) : "ARG";
             _opt.Argument = OptDefinitionArgument.Optional;
             _opt.ArgumentFormat = OptDefinitionArgumentFormat.EqualSign;
             return new OptWithArgumentDefinitionFluentBuilder<T>(this._opt);
@@ -85,6 +85,18 @@ namespace WinExtension.GetOpt
                 _opt.Requires.Add(req);
             }
 
+            return this;
+        }
+
+        public IOptDefinitionFluentBuilder<T> AddMatchTrigger(Action<T> trigger)
+        {
+            this._opt.OnMatched = trigger;
+            return this;
+        }
+
+        public IOptDefinitionFluentBuilder<T> AddRawTrigger(Action<string, string> trigger)
+        {
+            this._opt.OnRawMatched = trigger;
             return this;
         }
     }

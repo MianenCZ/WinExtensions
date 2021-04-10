@@ -21,5 +21,7 @@ namespace WinExtension.GetOpt
         public IArgDefinitionFluentBuilder<TTarget, TProp> IncludeStartingWithComma();
 
         public IArgDefinitionFluentBuilder<TTarget, TProp> ExcludeStartingWithComma();
+
+        public IArgDefinitionFluentBuilder<TTarget, TProp> AddOnMatchedTrigger(Action<TTarget> trigger);
     }
 }

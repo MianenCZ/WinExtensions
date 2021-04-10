@@ -12,6 +12,8 @@ namespace WinExtension.GetOpt.Dtos
         internal Expression<Func<T, bool>> Selector;
         internal HashSet<string> IncompatibleWith = new();
         internal HashSet<string> Requires = new();
+        internal Action<T> OnMatched = null;
+        internal Action<string, string> OnRawMatched = null;
 
         internal OptDefinition(Expression<Func<T, bool>> selector)
         {

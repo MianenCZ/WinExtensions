@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
+using WinExtension.Common.Extensions;
 using WinExtension.Common.Helpers;
 using WinExtension.GetOpt;
 
@@ -27,8 +28,21 @@ namespace ConsoleApplication3
         // app.exe -i file.in -o file.out 66f6eafd-7b49-48e4-9ee2-f979b272a32b
         static void Main(string[] args)
         {
+            int ten = 10;
+            Console.WriteLine(ten.InRange(0,5));
+            Console.WriteLine(ten.InRange(0,100));
+            Console.WriteLine(ten.InRange(20,100));
+
+            return;
+
+
+
             var getOpt = CreateGetOpt();
-            Console.WriteLine(getOpt.GenerateUsage());
+            //Console.WriteLine(getOpt.GenerateUsage());
+
+            Console.WriteLine(getOpt.GetOpts("-h", "i").ToJson());
+
+            Console.WriteLine("END!");
         }
 
         static GetOptBase<Cmd> CreateGetOpt()
@@ -38,13 +52,16 @@ namespace ConsoleApplication3
                   .HasShortName("i")
                   .HasLongName("in")
                   .WithRequiredArgument(_ => _.in_file)
-                  .WithName("input file");
+                  .WithName("input file")
+                  .HasDescription(
+                      "Defines source of input data. File specified in 'INPUT_FILE' must be writable. `stdin` is used when not set");
 
             getOpt.AddOpt(_ => _.o)
                   .HasShortName("o")
                   .HasLongName("out")
                   .WithRequiredArgument(_ => _.out_file)
                   .WithName("output file");
+            getOpt.AddHelp();
 
             getOpt.AddArg(_ => _.code, s => Guid.Parse(s))
                   .WithName("Code");

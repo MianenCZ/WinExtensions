@@ -92,5 +92,21 @@ namespace WinExtension.Common.Extensions
                 return false;
             }
         }
+
+        public static bool InRange<T>(this T value, T lower, T upper) where T : IComparable
+        {
+            bool up = value.CompareTo(lower) > 0;
+            bool down = value.CompareTo(upper) < 0;
+
+            return up & down;
+        }
+
+        public static bool InRangeInc<T>(this T value, T lower, T upper) where T : IComparable
+        {
+            bool up = value.CompareTo(lower) >= 0;
+            bool down = value.CompareTo(upper) <= 0;
+
+            return up & down;
+        }
     }
 }
